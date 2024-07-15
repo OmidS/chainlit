@@ -319,6 +319,9 @@ def get_user_facing_url(url: URL):
     """
     chainlit_url = os.environ.get("CHAINLIT_URL")
 
+    if 'auth/oauth/' in chainlit_url: 
+        logger.warning(f"CHAINLIT_URL includes 'auth/oauth/'. Did you set to the host url of your app? For instance, if you host your application at https://mydomain.com, CHAINLIT_URL should be set to https://mydomain.com.")
+
     # No config, we keep the URL as is
     if not chainlit_url:
         url = url.replace(query="", fragment="")
@@ -422,10 +425,13 @@ async def oauth_login(provider_id: str, request: Request):
 
     random = random_secret(32)
 
+    base_url = get_user_facing_url(request.url)
+    redirect_uri = f"{base_url}/auth/oauth/{provider_id}/callback"
+
     params = urllib.parse.urlencode(
         {
             "client_id": provider.client_id,
-            "redirect_uri": f"{get_user_facing_url(request.url)}/callback",
+            "redirect_uri": redirect_uri,
             "state": random,
             **provider.authorize_params,
         }
